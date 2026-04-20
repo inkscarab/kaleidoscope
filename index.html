@@ -3,43 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Твой личный Калейдоскоп</title>
+    <title>Двойной Калейдоскоп</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
-        canvas { display: block; cursor: crosshair; }
-        .msg {
-            position: absolute; top: 20px; width: 100%;
-            text-align: center; color: white;
-            font-family: serif; font-size: 1.2rem;
-            text-shadow: 0 0 10px black; pointer-events: none;
-        }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <div class="msg">Двигай курсором, чтобы заглянуть в воспоминания</div>
     <canvas id="canvas"></canvas>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const img = new Image();
 
-// --- НАСТРОЙКИ ---
-img.src = 'photo.jpg'; // Укажи здесь имя своего файла с картинкой
-const slices = 12; // Количество сегментов (лучше четное)
-// -----------------
+const img1 = new Image();
+const img2 = new Image();
+img1.src = 'photo1.jpg'; // Первое фото
+img2.src = 'photo2.jpg'; // Второе фото
+
+let loaded = 0;
+[img1, img2].forEach(img => img.onload = () => {
+    loaded++;
+    if(loaded === 2) { resize(); draw(); }
+});
 
 let width, height, radius;
-
-img.onload = () => {
-    resize();
-    draw();
-};
+const slices = 12; 
 
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    radius = Math.sqrt(width**2 + height**2) / 2;
+    radius = Math.sqrt(width**2 + height**2) / 1.5;
 }
 
 window.addEventListener('resize', resize);
@@ -49,9 +43,15 @@ window.addEventListener('mousemove', e => {
     mouseX = e.clientX;
     mouseY = e.clientY;
 });
+// Поддержка касаний для телефонов
+window.addEventListener('touchmove', e => {
+    mouseX = e.touches[0].clientX;
+    mouseY = e.touches[0].clientY;
+});
 
 function draw() {
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
     
     const step = (Math.PI * 2) / slices;
     const cx = width / 2;
@@ -62,32 +62,34 @@ function draw() {
         ctx.translate(cx, cy);
         ctx.rotate(i * step);
 
-        // Создаем треугольную маску для кусочка
+        // Маска-треугольник
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, radius, -step/2, step/2);
+        ctx.lineTo(radius, -step * radius / 2);
+        ctx.lineTo(radius, step * radius / 2);
         ctx.closePath();
         ctx.clip();
 
-        // Отражаем каждый второй кусочек для симметрии
+        // Чередуем фото: четные — первое, нечетные — второе
+        const currentImg = (i % 2 === 0) ? img1 : img2;
+        
+        // Отражаем каждый второй сегмент, чтобы узоры стыковались
         if (i % 2 === 1) {
-            ctx.scale(-1, 1);
+            ctx.scale(1, -1);
         }
 
-        // Рисуем часть изображения, привязанную к мышке
-        const iw = img.width;
-        const ih = img.height;
-        const scale = 1.5; // Масштаб фото внутри кусочка
-        
+        // Отрисовка фото
+        const scale = 2; 
         ctx.drawImage(
-            img, 
-            mouseX - (iw/2), mouseY - (ih/2), iw/scale, ih/scale, // область забора
-            0, -radius, radius * 2, radius * 2 // куда рисуем
+            currentImg,
+            (mouseX / width) * currentImg.width - 200, 
+            (mouseY / height) * currentImg.height - 200,
+            currentImg.width / scale, currentImg.height / scale,
+            0, -radius, radius * 2, radius * 2
         );
 
         ctx.restore();
     }
-    
     requestAnimationFrame(draw);
 }
 </script>
