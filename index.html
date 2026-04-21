@@ -40,6 +40,28 @@
     }
 
     canvas { display: block; width: 100%; height: 100%; }
+
+           .instruction {
+        position: absolute;
+        bottom: -60px; /* Текст будет под восьмигранником */
+        width: 140%; /* Чтобы текст не сильно дробился на узкие строки */
+        left: -20%;
+        text-align: center;
+        color: #fcf6ba; /* Светло-золотистый цвет */
+        font-family: 'Georgia', serif; /* Элегантный шрифт с засечками */
+        font-style: italic;
+        font-size: 1.1rem;
+        line-height: 1.5;
+        opacity: 0; /* Сначала текст невидим */
+        animation: fadeIn 3s ease-in forwards; /* Плавное появление через анимацию */
+        text-shadow: 0 0 10px rgba(191, 149, 63, 0.5);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
 </style>
 
 <body>
@@ -47,7 +69,14 @@
         <div id="kaleidoscope-container">
             <canvas id="canvas"></canvas>
         </div>
+        
+        <!-- Вот блок с текстом -->
+        <div class="instruction">
+            Коснись экрана или веди курсором,<br>
+            чтобы создать новый узор из наших мгновений...
+        </div>
     </div>
+</body>
 
 
 <script>
