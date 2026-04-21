@@ -35,8 +35,52 @@
 
 <script>
 
-    // Вставь это в начало скрипта к остальным переменным
-const zoom = 1.8; // Чем больше число, тем ближе "зум" и меньше шансов увидеть пустоту
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const img1 = new Image();
+const img2 = new Image();
+img1.src = 'photo1.jpg'; 
+img2.src = 'photo2.jpg';
+
+let loaded = 0;
+[img1, img2].forEach(img => img.onload = () => {
+    loaded++;
+    if(loaded === 2) { resize(); draw(); }
+});
+
+let size, radius;
+const slices = 12; 
+let time = 0;
+const zoom = 1.8; // Чем больше число, тем меньше шансов увидеть пустоту
+
+// Координаты
+let mouseX = 0, mouseY = 0;
+let targetX = 0, targetY = 0;
+let isMoving = false;
+
+function resize() {
+    size = canvas.width = canvas.height = canvas.offsetWidth;
+    radius = size / 0.7;
+    targetX = mouseX = size / 2;
+    targetY = mouseY = size / 2;
+}
+
+window.addEventListener('resize', resize);
+
+const updateMouse = (x, y) => {
+    const rect = canvas.getBoundingClientRect();
+    targetX = x - rect.left;
+    targetY = y - rect.top;
+    isMoving = true;
+    clearTimeout(window.mouseTimeout);
+    window.mouseTimeout = setTimeout(() => isMoving = false, 3000);
+};
+
+window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
+window.addEventListener('touchmove', e => {
+    updateMouse(e.touches[0].clientX, e.touches[0].clientY);
+});
 
 function draw() {
     time += 0.003; 
@@ -72,12 +116,10 @@ function draw() {
         const currentImg = (i % 2 === 0) ? img1 : img2;
         if (i % 2 === 1) ctx.scale(1, -1);
 
-        // --- УМНОЕ ЗАПОЛНЕНИЕ ---
-        // Вычисляем, насколько мы можем сдвинуть фото, чтобы не оголить край
+        // --- УМНОЕ ЗАПОЛНЕНИЕ (без пустот) ---
         const maxShiftX = (currentImg.width - (currentImg.width / zoom)) / 2;
         const maxShiftY = (currentImg.height - (currentImg.height / zoom)) / 2;
 
-        // Ограничиваем координаты (от -maxShift до +maxShift)
         const offsetX = ((finalX / size) - 0.5) * currentImg.width;
         const offsetY = ((finalY / size) - 0.5) * currentImg.height;
         
@@ -97,102 +139,6 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-
-const img1 = new Image();
-const img2 = new Image();
-img1.src = 'photo1.jpg'; 
-img2.src = 'photo2.jpg';
-
-let loaded = 0;
-[img1, img2].forEach(img => img.onload = () => {
-    loaded++;
-    if(loaded === 2) { resize(); draw(); }
-});
-
-let size, radius;
-const slices = 12; 
-let time = 0;
-
-// Координаты
-let mouseX = 0, mouseY = 0;
-let targetX = 0, targetY = 0;
-let isMoving = false;
-
-function resize() {
-    size = canvas.width = canvas.height = canvas.offsetWidth;
-    radius = size / 0.7;
-    // Начальная точка в центре
-    targetX = mouseX = size / 2;
-    targetY = mouseY = size / 2;
-}
-
-window.addEventListener('resize', resize);
-
-const updateMouse = (x, y) => {
-    const rect = canvas.getBoundingClientRect();
-    targetX = x - rect.left;
-    targetY = y - rect.top;
-    isMoving = true;
-    // Через 3 секунды бездействия включается автопилот
-    clearTimeout(window.mouseTimeout);
-    window.mouseTimeout = setTimeout(() => isMoving = false, 3000);
-};
-
-window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
-window.addEventListener('touchmove', e => updateMouse(e.touches[0].clientX, e.touches[0].clientY));
-
-function draw() {
-    time += 0.005; // Скорость авто-вращения
-
-    // Плавное следование за мышкой (инерция)
-    mouseX += (targetX - mouseX) * 0.05;
-    mouseY += (targetY - mouseY) * 0.05;
-
-    // Расчет автоматического смещения
-    const autoX = size/2 + Math.sin(time) * (size/3);
-    const autoY = size/2 + Math.cos(time * 0.8) * (size/3);
-
-    // Смешиваем координаты мыши и автопилота
-    const finalX = isMoving ? mouseX : autoX;
-    const finalY = isMoving ? mouseY : autoY;
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, size, size);
-    
-    const step = (Math.PI * 2) / slices;
-    const cx = size / 2;
-    const cy = size / 2;
-
-    for (let i = 0; i < slices; i++) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(i * step);
-
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(radius, -step * radius / 2);
-        ctx.lineTo(radius, step * radius / 2);
-        ctx.closePath();
-        ctx.clip();
-
-        const currentImg = (i % 2 === 0) ? img1 : img2;
-        if (i % 2 === 1) ctx.scale(1, -1);
-
-        const scale = 1.4; 
-        ctx.drawImage(
-            currentImg,
-            (finalX / size) * currentImg.width - (currentImg.width/scale/2), 
-            (finalY / size) * currentImg.height - (currentImg.height/scale/2),
-            currentImg.width / scale, currentImg.height / scale,
-            0, -radius, radius * 2, radius * 2
-        );
-
-        ctx.restore();
-    }
-    requestAnimationFrame(draw);
-}
 </script>
 </body>
 </html>
