@@ -34,6 +34,69 @@
     </div>
 
 <script>
+
+    // Вставь это в начало скрипта к остальным переменным
+const zoom = 1.8; // Чем больше число, тем ближе "зум" и меньше шансов увидеть пустоту
+
+function draw() {
+    time += 0.003; 
+
+    mouseX += (targetX - mouseX) * 0.05;
+    mouseY += (targetY - mouseY) * 0.05;
+
+    const autoX = size/2 + Math.sin(time) * (size/4);
+    const autoY = size/2 + Math.cos(time * 0.8) * (size/4);
+
+    const finalX = isMoving ? mouseX : autoX;
+    const finalY = isMoving ? mouseY : autoY;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, size, size);
+    
+    const step = (Math.PI * 2) / slices;
+    const cx = size / 2;
+    const cy = size / 2;
+
+    for (let i = 0; i < slices; i++) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(i * step);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(radius, -step * radius / 2);
+        ctx.lineTo(radius, step * radius / 2);
+        ctx.closePath();
+        ctx.clip();
+
+        const currentImg = (i % 2 === 0) ? img1 : img2;
+        if (i % 2 === 1) ctx.scale(1, -1);
+
+        // --- УМНОЕ ЗАПОЛНЕНИЕ ---
+        // Вычисляем, насколько мы можем сдвинуть фото, чтобы не оголить край
+        const maxShiftX = (currentImg.width - (currentImg.width / zoom)) / 2;
+        const maxShiftY = (currentImg.height - (currentImg.height / zoom)) / 2;
+
+        // Ограничиваем координаты (от -maxShift до +maxShift)
+        const offsetX = ((finalX / size) - 0.5) * currentImg.width;
+        const offsetY = ((finalY / size) - 0.5) * currentImg.height;
+        
+        const clampedX = Math.max(-maxShiftX, Math.min(maxShiftX, offsetX));
+        const clampedY = Math.max(-maxShiftY, Math.min(maxShiftY, offsetY));
+
+        ctx.drawImage(
+            currentImg,
+            (currentImg.width / 2 - currentImg.width / (zoom * 2)) + clampedX,
+            (currentImg.height / 2 - currentImg.height / (zoom * 2)) + clampedY,
+            currentImg.width / zoom, currentImg.height / zoom,
+            0, -radius, radius * 2, radius * 2
+        );
+
+        ctx.restore();
+    }
+    requestAnimationFrame(draw);
+}
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
