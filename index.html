@@ -14,50 +14,41 @@
         background: #050505;
     }
 
-    /* Общий контейнер */
-    .wrapper {
+    /* Золотая подложка (внешний восьмигранник) */
+    .gold-base {
         position: relative;
         width: 75vmin; 
         height: 75vmin;
+        background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+        /* Обрезаем подложку восьмигранником */
+        clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* Слой с калейдоскопом (снизу) */
+    /* Контейнер калейдоскопа (внутренний восьмигранник) */
     #kaleidoscope-container {
         position: absolute;
-        inset: 0;
+        /* Отступ от края золотой подложки (толщина рамки) */
+        width: calc(100% - 10px); 
+        height: calc(100% - 10px);
+        background: #000;
+        /* Обрезаем внутреннюю часть таким же восьмигранником */
         clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
         overflow: hidden;
-    }
-
-    /* Слой с рамкой (сверху) */
-    .gold-frame {
-        position: absolute;
-        inset: 0;
-        pointer-events: none; /* Пропускает клики сквозь себя к калейдоскопу */
-        /* Рисуем только контур восьмигранника */
-        background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-        
-        /* Магия маски: рисует фон только там, где рамка */
-        -webkit-mask: 
-            linear-gradient(#fff 0 0) content-box, 
-            linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-        
-        padding: 6px; /* ТОЛЩИНА РАМКИ */
-        clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
     }
 
     canvas { display: block; width: 100%; height: 100%; }
 </style>
 
 <body>
-    <div class="wrapper">
+    <div class="gold-base">
         <div id="kaleidoscope-container">
             <canvas id="canvas"></canvas>
         </div>
-        <div class="gold-frame"></div> <!-- Рамка теперь здесь, над калейдоскопом -->
     </div>
+
 
 <script>
 
